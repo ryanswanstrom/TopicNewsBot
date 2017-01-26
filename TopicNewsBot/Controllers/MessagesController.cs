@@ -24,7 +24,7 @@ namespace TopicNewsBot
             if (activity.Type == ActivityTypes.Message)
             {
                 ConnectorClient connector = new ConnectorClient(new Uri(activity.ServiceUrl));
-                string output = "try typing 'news <somenews topic>' ";
+                string output = "try typing 'news some-news-topic' ";
                 try
                 {
                     // collect incoming text
@@ -37,7 +37,7 @@ namespace TopicNewsBot
                     {
                         string topic = message.Substring(4).Trim();
                         StringBuilder sb = new StringBuilder();
-                        sb.Append($"Here is your daily '{topic}' news");
+                        sb.Append($"Here is <strong>your</strong> daily '{topic}' news");
                         sb.Append(Environment.NewLine);
 
                         var news = GetNews(topic);
