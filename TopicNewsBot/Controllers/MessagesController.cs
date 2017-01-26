@@ -37,16 +37,14 @@ namespace TopicNewsBot
                     {
                         string topic = message.Substring(4).Trim();
                         StringBuilder sb = new StringBuilder();
-                        sb.Append($"Here is <strong>your</strong> daily '{topic}' news");
+                        sb.Append($"Here is your daily '{topic}' news");
                         sb.Append(Environment.NewLine);
 
                         var news = GetNews(topic);
                         foreach (var item in news)
                         {
                             sb.Append(Environment.NewLine);
-                            sb.Append(item.Title);
-                            sb.Append(Environment.NewLine);
-                            sb.Append($"  {item.Url}");
+                            sb.Append($"<a href='{item.Url}'>{item.Title}</a>");
                             sb.Append(Environment.NewLine);
                         }
                         output = sb.ToString();
