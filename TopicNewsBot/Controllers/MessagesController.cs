@@ -1,12 +1,14 @@
-﻿using System;
-using System.Linq;
+﻿using Microsoft.Bot.Connector;
+using Newtonsoft.Json;
+using System;
+using System.Collections.Generic;
+using System.Configuration;
 using System.Net;
 using System.Net.Http;
+using System.Text;
 using System.Threading.Tasks;
+using System.Web;
 using System.Web.Http;
-using System.Web.Http.Description;
-using Microsoft.Bot.Connector;
-using Newtonsoft.Json;
 
 namespace TopicNewsBot
 {
@@ -22,11 +24,41 @@ namespace TopicNewsBot
             if (activity.Type == ActivityTypes.Message)
             {
                 ConnectorClient connector = new ConnectorClient(new Uri(activity.ServiceUrl));
-                // calculate something for us to return
-                int length = (activity.Text ?? string.Empty).Length;
+                string output = "try typing 'news <somenews topic>' ";
+                try
+                {
+                    // collect incoming text
+                    string message = (activity.Text ?? string.Empty).ToLower();
+                    
+                    // calculate something for us to return
+                    //int length = (activity.Text ?? string.Empty).Length;
+
+                    if (message.StartsWith("news"))
+                    {
+                        string topic = message.Substring(4).Trim();
+                        StringBuilder sb = new StringBuilder();
+                        sb.Append($"Here is your daily '{topic}' news");
+                        sb.Append(Environment.NewLine);
+
+                        var news = GetNews(topic);
+                        foreach (var item in news)
+                        {
+                            sb.Append(Environment.NewLine);
+                            sb.Append(item.Title);
+                            sb.Append(Environment.NewLine);
+                            sb.Append($"  {item.Url}");
+                            sb.Append(Environment.NewLine);
+                        }
+                        output = sb.ToString();
+                    }
+                } catch (Exception ex)
+                {
+                    output = "Sorry, some error occured. Please Try again.";
+                }
+
 
                 // return our reply to the user
-                Activity reply = activity.CreateReply($"You sent {activity.Text} which was {length} characters");
+                Activity reply = activity.CreateReply(output);
                 await connector.Conversations.ReplyToActivityAsync(reply);
             }
             else
@@ -35,6 +67,43 @@ namespace TopicNewsBot
             }
             var response = Request.CreateResponse(HttpStatusCode.OK);
             return response;
+        }
+        private List<NewsLink> GetNews(string topic)
+        {
+            if (String.IsNullOrWhiteSpace(topic))
+            {
+                topic = "data science";
+            }
+            List<NewsLink> news = new List<NewsLink>(5);
+
+            // call the rest API
+            var client = new HttpClient();
+            var queryString = HttpUtility.ParseQueryString(string.Empty);
+
+            // Request headers
+            client.DefaultRequestHeaders.Add("Ocp-Apim-Subscription-Key", ConfigurationManager.AppSettings["SEARCH_KEY"]);
+
+            // Request parameters
+            queryString["q"] = topic;
+            queryString["count"] = "5";
+            queryString["offset"] = "0";
+            queryString["freshness"] = "Day";
+            queryString["mkt"] = "en-us";
+            queryString["safeSearch"] = "Strict";
+            var uri = "https://api.cognitive.microsoft.com/bing/v5.0/news/search?" + queryString;
+
+            var response = client.GetAsync(uri).Result;
+            var contents = response.Content.ReadAsStringAsync().Result;
+
+            dynamic json = JsonConvert.DeserializeObject(contents);
+            dynamic values = json.value;
+            foreach (var v in values)
+            {
+                var lnk = new NewsLink((string)v.url, (string)v.name);
+                news.Add(lnk);
+            }
+
+            return news;
         }
 
         private Activity HandleSystemMessage(Activity message)
