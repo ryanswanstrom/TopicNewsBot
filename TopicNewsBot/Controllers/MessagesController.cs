@@ -44,7 +44,7 @@ namespace TopicNewsBot
                         foreach (var item in news)
                         {
                             sb.Append(Environment.NewLine);
-                            sb.Append($"* [{item.Title}]({item.Url})");
+                            sb.Append($"[{item.Title}]({item.Url})");
                             sb.Append(Environment.NewLine);
                         }
                         output = sb.ToString();
