@@ -30,9 +30,6 @@ namespace TopicNewsBot
                     // collect incoming text
                     string message = (activity.Text ?? string.Empty).ToLower();
                     
-                    // calculate something for us to return
-                    //int length = (activity.Text ?? string.Empty).Length;
-
                     if (message.StartsWith("news"))
                     {
                         string topic = message.Substring(4).Trim();
